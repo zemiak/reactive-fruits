@@ -9,11 +9,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
+import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 
 @Path("/fruits")
-@Transactional
 @ApplicationScoped
 public class Fruits {
 
@@ -24,8 +26,12 @@ public class Fruits {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void create(Fruit fruit) {
-        fruit.persist();
+    public Uni<Response> create(Fruit fruit) {
+        return Panache.withTransaction(
+                () -> fruit.persist()
+            ).replaceWith(
+                () -> Response.status(Status.CREATED).entity(fruit).build()
+        );
     }
 
     @GET
